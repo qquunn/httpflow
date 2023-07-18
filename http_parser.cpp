@@ -700,9 +700,9 @@ size_t http_parser_execute (http_parser *parser,
     break;
   }
 
-    if (CURRENT_STATE() == s_start_res) {
-        parser->nread = 0;
-    }
+  if(CURRENT_STATE() == s_start_res){
+      parser->nread = 0;
+  }
 
   for (p=data; p != data + len; p++) {
     ch = *p;
