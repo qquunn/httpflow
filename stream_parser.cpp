@@ -1,8 +1,10 @@
 #include "stream_parser.h"
 #include "util.h"
+#include "json.hpp"
 
 stream_parser::stream_parser(const pcre *url_filter_re, const pcre_extra *url_filter_extra,
-                             const std::string &output_path) :
+                             const std::string &output_path,
+                             kafkaservice* kafka) :
         url_filter_re(url_filter_re),
         url_filter_extra(url_filter_extra),
         output_path(output_path),
@@ -24,6 +26,7 @@ stream_parser::stream_parser(const pcre *url_filter_re, const pcre_extra *url_fi
     settings.on_headers_complete = on_headers_complete;
     settings.on_body = on_body;
     settings.on_message_complete = on_message_complete;
+    this->kafka = kafka;
 }
 
 bool stream_parser::parse(const struct packet_info &packet, enum http_parser_type type) {
@@ -197,6 +200,8 @@ void stream_parser::dump_http_request() {
         std::cout << buff;
     }
 
+    kafka->writemessage(this->to_json());
+
     if (!output_path.empty()) {
         static size_t req_idx = 0;
         std::snprintf(buff, 128, "/%p.%lu", this, ++req_idx);
@@ -226,6 +231,19 @@ void stream_parser::dump_http_request() {
     std::memset(&ts_usc, 0, sizeof ts_usc);
     gzip_flag = false;
     dump_flag = 1;
+}
+
+std::string stream_parser::to_json() {
+    using json = nlohmann::json;
+    json j;
+    j["method"] = method;
+    j["url"] = url;
+    j["host"] = host;
+    j["request"]["header"] = this->header[HTTP_REQUEST];
+    j["request"]["body"] = this->body[HTTP_REQUEST];
+    j["response"]["header"] = this->header[HTTP_RESPONSE];
+    j["response"]["body"] = this->body[HTTP_RESPONSE];
+    return j.dump();
 }
 
 bool stream_parser::is_stream_fin(const struct packet_info &packet, enum http_parser_type type) {

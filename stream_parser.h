@@ -7,6 +7,7 @@
 #include <pcre.h>
 #include <map>
 #include "http_parser.h"
+#include "kafkaservice.h"
 
 class stream_parser {
 
@@ -43,9 +44,9 @@ private:
     int dump_flag;
 
     uint32_t fin_nxtseq[HTTP_BOTH];
-
+    kafkaservice* kafka;
 public:
-    stream_parser(const pcre *url_filter_re, const pcre_extra *url_filter_extra, const std::string &output_path);
+    stream_parser(const pcre *url_filter_re, const pcre_extra *url_filter_extra, const std::string &output_path, kafkaservice* kafka);
 
     bool parse(const struct packet_info &packet, enum http_parser_type type);
 
@@ -58,6 +59,8 @@ public:
     bool match_url(const std::string &url);
 
     void dump_http_request();
+
+    std::string to_json();
 
     bool is_stream_fin(const struct packet_info &packet, enum http_parser_type type);
 

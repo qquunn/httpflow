@@ -29,6 +29,7 @@ struct capture_config {
     pcre *url_filter_re;
     pcre_extra *url_filter_extra;
     int datalink_size;
+    kafkaservice *kafka;
 };
 
 std::map<std::string, stream_parser *> http_requests;
@@ -188,7 +189,7 @@ struct ether_header {
 };
 
 void process_packet(const pcre *url_filter_re, const pcre_extra *url_filter_extra, const std::string &output_path,
-                    const u_char *data, size_t len, long ts_usc) {
+                    const u_char *data, size_t len, long ts_usc, kafkaservice* kafka) {
 
     struct packet_info packet;
     packet.ts_usc = ts_usc;
@@ -201,7 +202,7 @@ void process_packet(const pcre *url_filter_re, const pcre_extra *url_filter_extr
 
     if (iter == http_requests.end()) {
         if (!packet.body.empty() || (packet.is_syn && packet.ack == 0)) {
-            stream_parser *parser = new stream_parser(url_filter_re, url_filter_extra, output_path);
+            stream_parser *parser = new stream_parser(url_filter_re, url_filter_extra, output_path, kafka);
             if (parser->parse(packet, HTTP_REQUEST)) {
                 parser->set_addr(packet.src_addr, packet.dst_addr);
                 http_requests.insert(std::make_pair(join_addr, parser));
@@ -231,7 +232,8 @@ void pcap_callback(u_char *arg, const struct pcap_pkthdr *header, const u_char *
     size_t len = header->caplen - conf->datalink_size;
     long ts = header->ts.tv_sec * 1000000 + header->ts.tv_usec;
 
-    return process_packet(conf->url_filter_re, conf->url_filter_extra, conf->output_path, content, len, ts);
+    return process_packet(conf->url_filter_re, conf->url_filter_extra, conf->output_path, content, len, ts,
+                          conf->kafka);
 }
 
 static const struct option longopts[] = {
@@ -276,6 +278,7 @@ capture_config *default_config() {
     conf->filter = "tcp";
     conf->url_filter_re = NULL;
     conf->url_filter_extra = NULL;
+    conf->kafka = NULL;
 
     return conf;
 }
@@ -402,6 +405,7 @@ int main(int argc, char **argv) {
     if (-1 == init_capture_config(argc, argv, cap_conf, errbuf)) {
         return 1;
     }
+    cap_conf->kafka = new kafkaservice();
 
     if (!cap_conf->file_name.empty()) {
         handle = pcap_open_offline(cap_conf->file_name.c_str(), errbuf);
