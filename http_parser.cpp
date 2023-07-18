@@ -28,6 +28,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <limits.h>
+#include <iostream>
 
 #ifndef ULLONG_MAX
 # define ULLONG_MAX ((uint64_t) -1) /* 2^64-1 */
@@ -698,6 +699,10 @@ size_t http_parser_execute (http_parser *parser,
   default:
     break;
   }
+
+    if (CURRENT_STATE() == s_start_res) {
+        parser->nread = 0;
+    }
 
   for (p=data; p != data + len; p++) {
     ch = *p;
