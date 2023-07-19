@@ -35,5 +35,5 @@ void kafkaservice::writemessage(const std::string &msg) {
         }
     };
 
-    producer->send(record, deliveryCb);
+    producer->send(record, deliveryCb, kafka::clients::KafkaProducer::SendOption::ToCopyRecordValue);
 }
