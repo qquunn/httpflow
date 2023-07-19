@@ -2,3 +2,5 @@
 *.o
 httpflow
 .idea
+.tmp
+httpflow_1.0.0_amd64.deb
