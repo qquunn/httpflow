@@ -2,9 +2,11 @@
 #include "util.h"
 #include "json.hpp"
 
+using json = nlohmann::json;
+
 stream_parser::stream_parser(const pcre *url_filter_re, const pcre_extra *url_filter_extra,
                              const std::string &output_path,
-                             kafkaservice* kafka) :
+                             kafkaservice *kafka) :
         url_filter_re(url_filter_re),
         url_filter_extra(url_filter_extra),
         output_path(output_path),
@@ -200,7 +202,12 @@ void stream_parser::dump_http_request() {
         std::cout << buff;
     }
 
-    kafka->writemessage(this->to_json());
+
+    try {
+        kafka->writemessage(this->to_json().substr(0, 1024 * 990));
+    } catch (nlohmann::json_abi_v3_11_2::detail::type_error e) {
+        std::cerr << "error " << e.what() << std::endl;
+    }
 
     if (!output_path.empty()) {
         static size_t req_idx = 0;
@@ -234,7 +241,6 @@ void stream_parser::dump_http_request() {
 }
 
 std::string stream_parser::to_json() {
-    using json = nlohmann::json;
     json j;
     j["method"] = method;
     j["url"] = url;
