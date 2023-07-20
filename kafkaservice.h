@@ -5,15 +5,12 @@
 #ifndef HTTPFLOW_KAFKASERVICE_H
 #define HTTPFLOW_KAFKASERVICE_H
 
-#include <kafka/KafkaProducer.h>
-
-using namespace kafka;
-using namespace kafka::clients::producer;
+#include <librdkafka/rdkafkacpp.h>
 
 class kafkaservice {
 private:
-    Topic topic;
-    std::shared_ptr<kafka::clients::KafkaProducer> producer;
+    std::string topic;
+    RdKafka::Producer* producer;
 public:
     kafkaservice();
     void writemessage(std::string const &msg);

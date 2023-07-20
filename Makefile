@@ -1,8 +1,9 @@
 
 default: all
 
-CXXFLAGS=-O2 -I/usr/local/include
-LIBS=-lz -lpcap -lpcre -lrdkafka -pthread
+# gcc4.9配置-std=c++11
+CXXFLAGS=-O2 -I/usr/local/include -std=c++11
+LIBS=-lz -lpcap -lpcre -lrdkafka++ -pthread
 
 PREFIX?=/usr/local
 INSTALL_BIN=$(PREFIX)/bin
